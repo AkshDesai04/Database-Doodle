@@ -1,6 +1,12 @@
 package org.example.database;
 
-import java.sql.*;
+import org.example.TransitDataBundle;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,9 +19,14 @@ public class DatabaseReader {
         this.connectionManager = connectionManager;
     }
 
-    public List<String> getTableColumns(String tableName) {
+    // Returns a TransitDataBundle object with table columns and data
+    public TransitDataBundle getTableDataBundle(String tableName) {
         List<String> columns = new ArrayList<>();
-        try (ResultSet rs = connectionManager.getConnection().getMetaData().getColumns(connectionManager.getConnection().getCatalog(), null, tableName, null)) {
+        List<Map<String, Object>> data = new ArrayList<>();
+
+        // Get table columns
+        try (ResultSet rs = connectionManager.getConnection().getMetaData().getColumns(
+                connectionManager.getConnection().getCatalog(), null, tableName, null)) {
             while (rs.next()) {
                 columns.add(rs.getString("COLUMN_NAME"));
             }
@@ -23,11 +34,8 @@ public class DatabaseReader {
             e.printStackTrace();
             throw new RuntimeException("Failed to retrieve table columns.");
         }
-        return columns;
-    }
 
-    public List<Map<String, Object>> getTableData(String tableName) {
-        List<Map<String, Object>> data = new ArrayList<>();
+        // Get table data
         try (
                 Connection connection = connectionManager.getConnection();
                 Statement stmt = connection.createStatement();
@@ -47,6 +55,11 @@ public class DatabaseReader {
             e.printStackTrace();
             throw new RuntimeException("Failed to retrieve table data.");
         }
-        return data;
+
+        // Create and populate the TransitDataBundle object
+        TransitDataBundle dataBundle = new TransitDataBundle();
+        dataBundle.columns = columns;
+        dataBundle.data = data;
+        return dataBundle;
     }
 }

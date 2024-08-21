@@ -3,9 +3,9 @@ package org.example;
 import org.example.database.ConnectionManager;
 import org.example.database.DatabaseReader;
 import org.example.database.output.OutputHandler;
+import org.example.database.sorting.Sorting;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 public class Main {
@@ -49,12 +49,11 @@ public class Main {
             String selectedTable = tables.get(tableIndex - 1);
 
             DatabaseReader databaseReader = new DatabaseReader(connectionManager);
-            List<String> columns = databaseReader.getTableColumns(selectedTable);
-            List<Map<String, Object>> data = databaseReader.getTableData(selectedTable);
+            TransitDataBundle dataBundle = databaseReader.getTableDataBundle(selectedTable);
 
             OutputHandler outputHandler = new OutputHandler();
-            outputHandler.printTableData(columns, data);
-            outputHandler.exportTableDataToCSV(columns, data, "C:\\Users\\akshd\\Documents\\Data\\tableToCSV.csv");
+            outputHandler.printTableData(Sorting.sort(dataBundle, "SurfaceArea", true));
+            outputHandler.exportTableDataToCSV(Sorting.sort(dataBundle, "SurfaceArea", true), "C:\\Users\\akshd\\Documents\\Data\\tableToCSV.csv");
         } finally {
             // Ensure the connection is closed after operations
             try {
