@@ -1,127 +1,69 @@
 package org.example;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.example.database.ConnectionManager;
+import org.example.database.DatabaseReader;
+import org.example.database.output.OutputHandler;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Enter file path (CSV or Excel):");
-        String filePath = scanner.nextLine();
+        System.out.println("Enter database URL:");
+        String url = scanner.nextLine();
 
-        List<Map<String, Object>> data;
+        System.out.println("Enter username:");
+        String username = scanner.nextLine();
+
+        System.out.println("Enter password:");
+        String password = scanner.nextLine();
+
+        ConnectionManager connectionManager = new ConnectionManager();
+        connectionManager.connect(url, username, password);
+
         try {
-            if (filePath.endsWith(".csv")) {
-                data = convertCsvToMap(filePath);
-            } else if (filePath.endsWith(".xlsx")) {
-                data = convertExcelToMap(filePath);
-            } else {
-                System.out.println("Unsupported file format. Please provide a CSV or Excel file.");
-                return;
+            List<String> databases = connectionManager.getDatabases();
+            System.out.println("Available databases:");
+            for (int i = 0; i < databases.size(); i++) {
+                System.out.println((i + 1) + ". " + databases.get(i));
             }
 
-            if (data.isEmpty()) {
-                System.out.println("No data found.");
-            } else {
-                System.out.println("Data from the file:");
-                printTableData(new ArrayList<>(data.get(0).keySet()), data);
+            System.out.println("Select a database by number:");
+            int dbIndex = scanner.nextInt();
+            scanner.nextLine();  // consume the newline character
+            String selectedDatabase = databases.get(dbIndex - 1);
+            connectionManager.selectDatabase(selectedDatabase);
+
+            List<String> tables = connectionManager.getTables();
+            System.out.println("Available tables:");
+            for (int i = 0; i < tables.size(); i++) {
+                System.out.println((i + 1) + ". " + tables.get(i));
             }
-        } catch (IOException e) {
-            System.out.println("Error reading the file: " + e.getMessage());
-        }
-    }
 
-    public static List<Map<String, Object>> convertCsvToMap(String filePath) throws IOException {
-        List<Map<String, Object>> recordsList = new ArrayList<>();
+            System.out.println("Select a table by number:");
+            int tableIndex = scanner.nextInt();
+            scanner.nextLine();  // consume the newline character
+            String selectedTable = tables.get(tableIndex - 1);
 
-        try (FileReader reader = new FileReader(filePath);
-             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
+            DatabaseReader databaseReader = new DatabaseReader(connectionManager);
+            List<String> columns = databaseReader.getTableColumns(selectedTable);
+            List<Map<String, Object>> data = databaseReader.getTableData(selectedTable);
 
-            for (CSVRecord record : csvParser) {
-                Map<String, Object> rowMap = new HashMap<>();
-                for (String header : csvParser.getHeaderNames()) {
-                    rowMap.put(header, record.get(header));
+            OutputHandler outputHandler = new OutputHandler();
+            outputHandler.printTableData(columns, data);
+        } finally {
+            // Ensure the connection is closed after operations
+            try {
+                if (connectionManager.getConnection() != null && !connectionManager.getConnection().isClosed()) {
+                    connectionManager.getConnection().close();
+                    System.out.println("Connection closed.");
                 }
-                recordsList.add(rowMap);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }
-
-        return recordsList;
-    }
-
-    public static List<Map<String, Object>> convertExcelToMap(String filePath) throws IOException {
-        List<Map<String, Object>> recordsList = new ArrayList<>();
-
-        try (FileInputStream fis = new FileInputStream(new File(filePath));
-             Workbook workbook = new XSSFWorkbook(fis)) {
-
-            Sheet sheet = workbook.getSheetAt(0);
-            Iterator<Row> rowIterator = sheet.iterator();
-            Row headerRow = rowIterator.next();  // Assuming the first row is the header
-            List<String> headers = new ArrayList<>();
-
-            for (Cell cell : headerRow) {
-                headers.add(cell.getStringCellValue());
-            }
-
-            while (rowIterator.hasNext()) {
-                Row currentRow = rowIterator.next();
-                Map<String, Object> rowMap = new HashMap<>();
-
-                for (int i = 0; i < headers.size(); i++) {
-                    Cell cell = currentRow.getCell(i);
-                    rowMap.put(headers.get(i), getCellValue(cell));
-                }
-
-                recordsList.add(rowMap);
-            }
-        }
-
-        return recordsList;
-    }
-
-    private static Object getCellValue(Cell cell) {
-        if (cell == null) return null;
-        switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue();
-            case NUMERIC:
-                if (DateUtil.isCellDateFormatted(cell)) {
-                    return cell.getDateCellValue();
-                } else {
-                    return cell.getNumericCellValue();
-                }
-            case BOOLEAN:
-                return cell.getBooleanCellValue();
-            case FORMULA:
-                return cell.getCellFormula();
-            case BLANK:
-                return "";
-            default:
-                return null;
-        }
-    }
-
-    public static void printTableData(List<String> columns, List<Map<String, Object>> data) {
-        // Print header
-        System.out.println(String.join(" | ", columns));
-
-        // Print data
-        for (Map<String, Object> row : data) {
-            for (String column : columns) {
-                System.out.print(row.get(column) + " | ");
-            }
-            System.out.println();
         }
     }
 }
