@@ -54,6 +54,7 @@ public class Main {
 
             OutputHandler outputHandler = new OutputHandler();
             outputHandler.printTableData(columns, data);
+            outputHandler.exportTableDataToCSV(columns, data, "C:\\Users\\akshd\\Documents\\Data\\tableToCSV.csv");
         } finally {
             // Ensure the connection is closed after operations
             try {
