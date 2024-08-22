@@ -3,7 +3,6 @@ package org.example;
 import org.example.database.ConnectionManager;
 import org.example.database.DatabaseReader;
 import org.example.database.output.OutputHandler;
-import org.example.database.sorting.Sorting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,54 +12,41 @@ public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Enter the number of databases you want to connect to (1 or 2):");
+        System.out.println("Enter the number of databases you want to connect to:");
         int dbCount = scanner.nextInt();
         scanner.nextLine();
 
-        ConnectionManager connectionManager1 = new ConnectionManager();
-        ConnectionManager connectionManager2 = null;
+        List<ConnectionManager> connectionManagers = new ArrayList<>();
 
-        System.out.println("Enter database 1 URL:");
-        String url1 = scanner.nextLine();
+        for (int i = 1; i <= dbCount; i++) {
+            ConnectionManager connectionManager = new ConnectionManager();
 
-        System.out.println("Enter username for database 1:");
-        String username1 = scanner.nextLine();
+            System.out.println("Enter database " + i + " URL:");
+            String url = scanner.nextLine();
 
-        System.out.println("Enter password for database 1:");
-        String password1 = scanner.nextLine();
+            System.out.println("Enter username for database " + i + ":");
+            String username = scanner.nextLine();
 
-        connectionManager1.connect(url1, username1, password1);
+            System.out.println("Enter password for database " + i + ":");
+            String password = scanner.nextLine();
 
-        if (dbCount == 2) {
-            connectionManager2 = new ConnectionManager();
-
-            System.out.println("Enter database 2 URL:");
-            String url2 = scanner.nextLine();
-
-            System.out.println("Enter username for database 2:");
-            String username2 = scanner.nextLine();
-
-            System.out.println("Enter password for database 2:");
-            String password2 = scanner.nextLine();
-
-            connectionManager2.connect(url2, username2, password2);
+            connectionManager.connect(url, username, password);
+            connectionManagers.add(connectionManager);
         }
 
         try {
-            selectAndExportTables(connectionManager1, scanner, "1");
-            if (connectionManager2 != null) {
-                selectAndExportTables(connectionManager2, scanner, "2");
+            for (int i = 0; i < connectionManagers.size(); i++) {
+                selectAndExportTables(connectionManagers.get(i), scanner, String.valueOf(i + 1));
             }
         } finally {
-            closeConnection(connectionManager1);
-            if (connectionManager2 != null) {
-                closeConnection(connectionManager2);
+            for (ConnectionManager connectionManager : connectionManagers) {
+                closeConnection(connectionManager);
             }
         }
     }
 
     private static void selectAndExportTables(ConnectionManager connectionManager, Scanner scanner, String dbLabel) {
-        String csvPath = "C:\\DatabaseDoodleOutput\\DBDO.csv"
+        String csvPath = "C:\\DatabaseDoodleOutput\\";
         List<String> databases = connectionManager.getDatabases();
         System.out.println("Available databases for connection " + dbLabel + ":");
         for (int i = 0; i < databases.size(); i++) {
@@ -69,7 +55,7 @@ public class Main {
 
         System.out.println("Select a database by number for connection " + dbLabel + ":");
         int dbIndex = scanner.nextInt();
-        scanner.nextLine(); 
+        scanner.nextLine();
         String selectedDatabase = databases.get(dbIndex - 1);
         connectionManager.selectDatabase(selectedDatabase);
 
@@ -97,16 +83,16 @@ public class Main {
         for (String selectedTable : selectedTables) {
             TransitDataBundle dataBundle = databaseReader.getTableDataBundle(selectedTable);
 
-            // Display table data
-            outputHandler.printTableData(Sorting.sort(dataBundle, "SurfaceArea", true));
+            // Display table data before saving to CSV
+            outputHandler.printTableData(dataBundle);
 
-            System.out.println("\n\nEnter the CSV file name for table '" + selectedTable + "' (without extension):");
+            System.out.println("\nEnter the CSV file name for table '" + selectedTable + "' (without extension):");
             String fileName = scanner.nextLine();
-            String csvPath = output_csv_path;
 
             // Export table data
-            outputHandler.exportTableDataToCSV(Sorting.sort(dataBundle, "SurfaceArea", true), csvPath);
-            System.out.println("Data successfully exported to " + csvPath);
+            String outputPath = csvPath + fileName + ".csv";
+            outputHandler.exportTableDataToCSV(dataBundle, outputPath);
+            System.out.println("Data successfully exported to " + outputPath);
         }
     }
 
