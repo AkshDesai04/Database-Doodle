@@ -60,6 +60,7 @@ public class Main {
     }
 
     private static void selectAndExportTables(ConnectionManager connectionManager, Scanner scanner, String dbLabel) {
+        String csvPath = "C:\\DatabaseDoodleOutput\\DBDO.csv"
         List<String> databases = connectionManager.getDatabases();
         System.out.println("Available databases for connection " + dbLabel + ":");
         for (int i = 0; i < databases.size(); i++) {
@@ -101,7 +102,7 @@ public class Main {
 
             System.out.println("\n\nEnter the CSV file name for table '" + selectedTable + "' (without extension):");
             String fileName = scanner.nextLine();
-            String csvPath = "C:\\Users\\karan\\OneDrive\\Desktop\\Temp\\" + fileName + ".csv";
+            String csvPath = output_csv_path;
 
             // Export table data
             outputHandler.exportTableDataToCSV(Sorting.sort(dataBundle, "SurfaceArea", true), csvPath);
