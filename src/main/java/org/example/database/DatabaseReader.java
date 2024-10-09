@@ -4,13 +4,9 @@ import org.example.TransitDataBundle;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class DatabaseReader {
     private final ConnectionManager connectionManager;
@@ -19,47 +15,64 @@ public class DatabaseReader {
         this.connectionManager = connectionManager;
     }
 
-    // Returns a TransitDataBundle object with table columns and data
     public TransitDataBundle getTableDataBundle(String tableName) {
-        List<String> columns = new ArrayList<>();
-        List<Map<String, Object>> data = new ArrayList<>();
-
-        // Get table columns
-        try (ResultSet rs = connectionManager.getConnection().getMetaData().getColumns(
-                connectionManager.getConnection().getCatalog(), null, tableName, null)) {
-            while (rs.next()) {
-                columns.add(rs.getString("COLUMN_NAME"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to retrieve table columns.");
-        }
-
-        // Get table data
-        try (
-                Connection connection = connectionManager.getConnection();
-                Statement stmt = connection.createStatement();
-                ResultSet rs = stmt.executeQuery("SELECT * FROM " + tableName)
-        ) {
-            ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
-
-            while (rs.next()) {
-                Map<String, Object> row = new HashMap<>();
-                for (int i = 1; i <= columnCount; i++) {
-                    row.put(metaData.getColumnName(i), rs.getObject(i));
-                }
-                data.add(row);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to retrieve table data.");
-        }
-
-        // Create and populate the TransitDataBundle object
         TransitDataBundle dataBundle = new TransitDataBundle();
-        dataBundle.columns = columns;
-        dataBundle.data = data;
+        try {
+            Connection connection = connectionManager.getConnection();
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName);
+
+            // Fetch column names
+            List<String> columnNames = new ArrayList<>();
+            int columnCount = resultSet.getMetaData().getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                columnNames.add(resultSet.getMetaData().getColumnName(i));
+            }
+
+            // Fetch table data
+            List<List<Object>> tableData = new ArrayList<>();
+            while (resultSet.next()) {
+                List<Object> row = new ArrayList<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    row.add(resultSet.getObject(i));
+                }
+                tableData.add(row);
+            }
+
+            // Set the column names and table data in the data bundle
+            dataBundle.setColumnNames(columnNames);
+            dataBundle.setTableData(tableData);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return dataBundle;
+    }
+
+    public List<String> getDatabases() {
+        List<String> databases = new ArrayList<>();
+        try {
+            Connection connection = connectionManager.getConnection();
+            ResultSet resultSet = connection.getMetaData().getCatalogs();
+            while (resultSet.next()) {
+                databases.add(resultSet.getString(1));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return databases;
+    }
+
+    public List<String> getTables() {
+        List<String> tables = new ArrayList<>();
+        try {
+            Connection connection = connectionManager.getConnection();
+            ResultSet resultSet = connection.getMetaData().getTables(null, null, "%", new String[]{"TABLE"});
+            while (resultSet.next()) {
+                tables.add(resultSet.getString(3));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return tables;
     }
 }

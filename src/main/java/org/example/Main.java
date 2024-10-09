@@ -2,8 +2,10 @@ package org.example;
 
 import org.example.database.ConnectionManager;
 import org.example.database.DatabaseReader;
+import org.example.database.grouping.Grouping;
 import org.example.database.output.OutputHandler;
 import org.example.database.sorting.Sorting;
+import org.example.database.joining.Joining;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,28 +99,106 @@ public class Main {
         for (String selectedTable : selectedTables) {
             TransitDataBundle dataBundle = databaseReader.getTableDataBundle(selectedTable);
 
-            // Display table data before saving to CSV
-            outputHandler.printTableData(Sorting.sort(dataBundle, "SurfaceArea", true));
-
-            System.out.println("\nEnter the CSV file name for table '" + selectedTable + "' (without extension):");
-            String fileName = scanner.nextLine();
-
-            // Ask user if they want to specify a custom path
-            System.out.println("Do you want to specify a custom path for the file? (yes/no):");
-            String customPathChoice = scanner.nextLine().trim().toLowerCase();
-
-            String outputPath;
-            if (customPathChoice.equals("yes")) {
-                System.out.println("Enter the custom file path:");
-                String customPath = scanner.nextLine();
-                outputPath = customPath + "\\" + fileName + ".csv"; // Use custom path
-            } else {
-                outputPath = defaultCsvPath + fileName + ".csv"; // Use default path
+            // Display the columns in the table
+            System.out.println("Available columns in the table '" + selectedTable + "':");
+            for (int i = 0; i < dataBundle.columns.size(); i++) {
+                System.out.println((i + 1) + ". " + dataBundle.columns.get(i));
             }
 
-            // Export table data
-            outputHandler.exportTableDataToCSV(Sorting.sort(dataBundle, "SurfaceArea", true), outputPath);
-            System.out.println("Data successfully exported to " + outputPath);
+            // Display the data and ask for operations
+            System.out.println("Select an operation to perform on the table:");
+            System.out.println("1. Sort");
+            System.out.println("2. Join");
+            System.out.println("3. Group By");
+            System.out.println("4. Export to CSV");
+
+            int operationChoice = scanner.nextInt();
+            scanner.nextLine();  // Consume newline
+
+            switch (operationChoice) {
+                case 1 -> { // Sort Operation
+                    System.out.println("Enter the number corresponding to the column to sort by:");
+                    int sortColumnIndex = scanner.nextInt();
+                    scanner.nextLine(); // Consume newline
+                    String sortColumn = dataBundle.columns.get(sortColumnIndex - 1);
+                    System.out.println("Sort ascending? (true/false):");
+                    boolean ascending = scanner.nextBoolean();
+                    scanner.nextLine();  // Consume newline
+
+                    dataBundle = Sorting.sort(dataBundle, sortColumn, ascending);
+                    outputHandler.printTableData(dataBundle);
+                }
+                case 2 -> { // Join Operation
+                    System.out.println("Enter the table number to join with:");
+                    for (int i = 0; i < tables.size(); i++) {
+                        System.out.println((i + 1) + ". " + tables.get(i));
+                    }
+                    int joinTableIndex = scanner.nextInt();
+                    scanner.nextLine();
+                    String joinTable = tables.get(joinTableIndex - 1);
+
+                    // Fetch the columns from the join table
+                    TransitDataBundle joinDataBundle = databaseReader.getTableDataBundle(joinTable);
+
+                    // Display columns from the first table (current table)
+                    System.out.println("Columns in the current table (" + selectedTable + "):");
+                    for (int i = 0; i < dataBundle.columns.size(); i++) {
+                        System.out.println((i + 1) + ". " + dataBundle.columns.get(i));
+                    }
+
+                    System.out.println("Enter the number corresponding to the column to join from the current table:");
+                    int joinColumnIndex1 = scanner.nextInt();
+                    scanner.nextLine();
+                    String joinColumn1 = dataBundle.columns.get(joinColumnIndex1 - 1);
+
+                    // Display columns from the second table (join table)
+                    System.out.println("Columns in the join table (" + joinTable + "):");
+                    for (int i = 0; i < joinDataBundle.columns.size(); i++) {
+                        System.out.println((i + 1) + ". " + joinDataBundle.columns.get(i));
+                    }
+
+                    System.out.println("Enter the number corresponding to the column to join from the join table:");
+                    int joinColumnIndex2 = scanner.nextInt();
+                    scanner.nextLine();
+                    String joinColumn2 = joinDataBundle.columns.get(joinColumnIndex2 - 1);
+
+                    // Perform the join based on the selected columns from both tables
+                    dataBundle = Joining.performJoin(dataBundle, joinDataBundle, joinColumn1, joinColumn2);
+
+                    // Print the merged table after the join
+                    outputHandler.printTableData(dataBundle);
+                }
+                case 3 -> { // Group By Operation
+                    System.out.println("Enter the number corresponding to the column to group by:");
+                    int groupByColumnIndex = scanner.nextInt();
+                    scanner.nextLine();
+                    String groupByColumn = dataBundle.columns.get(groupByColumnIndex - 1);
+
+                    dataBundle = Grouping.groupBy(dataBundle, groupByColumn);
+                    outputHandler.printTableData(dataBundle);
+                }
+                case 4 -> { // Export to CSV
+                    System.out.println("Enter the CSV file name for table '" + selectedTable + "' (without extension):");
+                    String fileName = scanner.nextLine();
+
+                    System.out.println("Do you want to specify a custom path for the file? (yes/no):");
+                    String customPathChoice = scanner.nextLine().trim().toLowerCase();
+
+                    String outputPath;
+                    if (customPathChoice.equals("yes")) {
+                        System.out.println("Enter the custom file path:");
+                        String customPath = scanner.nextLine();
+                        outputPath = customPath + "\\" + fileName + ".csv"; // Use custom path
+                    } else {
+                        outputPath = defaultCsvPath + fileName + ".csv"; // Use default path
+                    }
+
+                    // Export table data to CSV
+                    outputHandler.exportTableDataToCSV(dataBundle, outputPath);
+                    System.out.println("Data successfully exported to " + outputPath);
+                }
+                default -> System.out.println("Invalid choice.");
+            }
         }
     }
 

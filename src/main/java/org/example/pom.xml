@@ -12,12 +12,10 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <hibernate.version>5.6.15.Final</hibernate.version>
-        <mysql.version>8.0.32</mysql.version>
+        <mysql.version>8.0.33</mysql.version> <!-- Updated MySQL Connector version -->
         <postgresql.version>42.7.2</postgresql.version>
         <oracle.version>19.8.0.0</oracle.version>
         <sqlserver.version>9.4.0.jre8</sqlserver.version>
-        <poi.version>5.2.3</poi.version>
-        <commons.csv.version>1.10.0</commons.csv.version>
     </properties>
 
     <dependencies>
@@ -69,46 +67,6 @@
             <artifactId>slf4j-simple</artifactId>
             <version>1.7.36</version>
         </dependency>
-
-        <!-- Apache POI for Excel -->
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-            <version>${poi.version}</version>
-        </dependency>
-
-        <!-- Apache POI core -->
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi</artifactId>
-            <version>${poi.version}</version>
-        </dependency>
-
-        <!-- Apache Commons CSV -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-csv</artifactId>
-            <version>${commons.csv.version}</version>
-        </dependency>
-
-        <!-- Apache POI dependencies -->
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml-schemas</artifactId>
-            <version>${poi.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.xmlbeans</groupId>
-            <artifactId>xmlbeans</artifactId>
-            <version>5.1.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-collections4</artifactId>
-            <version>4.4</version>
-        </dependency>
     </dependencies>
 
     <build>
@@ -124,4 +82,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>

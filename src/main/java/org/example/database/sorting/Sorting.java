@@ -9,8 +9,8 @@ import java.util.Map;
 
 public class Sorting {
     public static TransitDataBundle sort(TransitDataBundle data, String column, boolean aesc) {
-        List<Map<String, Object>> dataList = data.data;
-        List<String> columns = data.columns;
+        List<Map<String, Object>> dataList = data.getData();
+        List<String> columns = data.getColumns();
 
         // Ensure the specified column exists
         if (!columns.contains(column)) {
