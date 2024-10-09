@@ -60,7 +60,7 @@ public class Main {
     }
 
     private static void selectAndExportTables(ConnectionManager connectionManager, Scanner scanner, String dbLabel) {
-        String csvPath = "C:\\DatabaseDoodleOutput\\DBDO.csv"
+        String defaultCsvPath = "C:\\DatabaseDoodleOutput\\";
         List<String> databases = connectionManager.getDatabases();
         System.out.println("Available databases for connection " + dbLabel + ":");
         for (int i = 0; i < databases.size(); i++) {
@@ -69,7 +69,7 @@ public class Main {
 
         System.out.println("Select a database by number for connection " + dbLabel + ":");
         int dbIndex = scanner.nextInt();
-        scanner.nextLine(); 
+        scanner.nextLine();
         String selectedDatabase = databases.get(dbIndex - 1);
         connectionManager.selectDatabase(selectedDatabase);
 
@@ -97,16 +97,28 @@ public class Main {
         for (String selectedTable : selectedTables) {
             TransitDataBundle dataBundle = databaseReader.getTableDataBundle(selectedTable);
 
-            // Display table data
+            // Display table data before saving to CSV
             outputHandler.printTableData(Sorting.sort(dataBundle, "SurfaceArea", true));
 
-            System.out.println("\n\nEnter the CSV file name for table '" + selectedTable + "' (without extension):");
+            System.out.println("\nEnter the CSV file name for table '" + selectedTable + "' (without extension):");
             String fileName = scanner.nextLine();
-            String csvPath = output_csv_path;
+
+            // Ask user if they want to specify a custom path
+            System.out.println("Do you want to specify a custom path for the file? (yes/no):");
+            String customPathChoice = scanner.nextLine().trim().toLowerCase();
+
+            String outputPath;
+            if (customPathChoice.equals("yes")) {
+                System.out.println("Enter the custom file path:");
+                String customPath = scanner.nextLine();
+                outputPath = customPath + "\\" + fileName + ".csv"; // Use custom path
+            } else {
+                outputPath = defaultCsvPath + fileName + ".csv"; // Use default path
+            }
 
             // Export table data
-            outputHandler.exportTableDataToCSV(Sorting.sort(dataBundle, "SurfaceArea", true), csvPath);
-            System.out.println("Data successfully exported to " + csvPath);
+            outputHandler.exportTableDataToCSV(Sorting.sort(dataBundle, "SurfaceArea", true), outputPath);
+            System.out.println("Data successfully exported to " + outputPath);
         }
     }
 
