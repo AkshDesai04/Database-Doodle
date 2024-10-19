@@ -136,19 +136,19 @@ Database-Doodle will be developed in multiple versions using a spiral model of s
 
 ### Version 1: CLI Database Connection
 
-- [ ] **Connect to a database via Command Line Interface (CLI):**
-    - [ ] Implement database connection configuration.
-    - [ ] Validate and establish a connection to the specified database.
-    - [ ] Handle authentication and security protocols if applicable.
-    - [ ] Ensure error handling for connection failures.
-    - [ ] `Main.java`
-    - [ ] `database/ConnectionManager.java`
+- [x] **Connect to a database via Command Line Interface (CLI):**
+    - [x] Implement database connection configuration.
+    - [x] Validate and establish a connection to the specified database.
+    - [x] Handle authentication and security protocols if applicable.
+    - [x] Ensure error handling for connection failures.
+    - [x] `Main.java`
+    - [x] `database/ConnectionManager.java`
 
-- [ ] **Print all data from the connected database:**
-    - [ ] Retrieve metadata to list available tables.
-    - [ ] Iterate through each table and fetch all rows.
-    - [ ] Format and display data in the CLI interface.
-    - [ ] `database/DatabaseReader.java`
+- [x] **Print all data from the connected database:**
+    - [x] Retrieve metadata to list available tables.
+    - [x] Iterate through each table and fetch all rows.
+    - [x] Format and display data in the CLI interface.
+    - [x] `database/DatabaseReader.java`
 
 ### Version 2: Complex Queries via CLI
 
@@ -174,29 +174,29 @@ Database-Doodle will be developed in multiple versions using a spiral model of s
     - [ ] `database/grouping/GroupBy.java`
     - [ ] `database/grouping/Having.java`
 
-- [ ] **Version 2.3: Sorting**
-    - [ ] Implement sorting operations (e.g., order by).
-    - [ ] Validate and execute sorting queries.
-    - [ ] `database/SortOperations.java`
-    - [ ] `database/sorting/OrderBy.java`
-    - [ ] `database/sorting/Sort.java`
+- [x] **Version 2.3: Sorting**
+    - [x] Implement sorting operations (e.g., order by).
+    - [x] Validate and execute sorting queries.
+    - [x] `database/SortOperations.java`
+    - [x] `database/sorting/OrderBy.java`
+    - [x] `database/sorting/Sort.java`
 
-- [ ] **Version 2.4: Results**
-    - [ ] Handle query results and output in various formats.
-    - [ ] `database/output/OutputHandler.java`
-    - [ ] `database/output/CSVExporter.java`
-    - [ ] `database/output/ExcelExporter.java`
-    - [ ] `database/output/OracleExporter.java`
-    - [ ] `database/output/MySQLExporter.java`
+- [x] **Version 2.4: Results**
+    - [x] Handle query results and output in various formats.
+    - [x] `database/output/OutputHandler.java`
+    - [x] `database/output/CSVExporter.java`
+    - [x] `database/output/ExcelExporter.java`
+    - [x] `database/output/OracleExporter.java`
+    - [x] `database/output/MySQLExporter.java`
 
 ### Version 3: Cross-Device Cross-Database Compatibility via CLI
 
-- [ ] **Enhance CLI for cross-device/database compatibility:**
-    - [ ] Extend CLI capabilities to accommodate connections to multiple databases (e.g., Oracle, MySQL).
-    - [ ] Implement backend logic using Hibernate to manage connections and optimize query performance across databases.
-    - [ ] Develop features to handle cross-database joins and ensure compatibility of data types and query execution.
-    - [ ] `database/ConnectionManager.java` (handle multiple databases)
-    - [ ] `database/DatabaseReader.java` (iterate over multiple databases)
+- [x] **Enhance CLI for cross-device/database compatibility:**
+    - [x] Extend CLI capabilities to accommodate connections to multiple databases (e.g., Oracle, MySQL).
+    - [x] Implement backend logic using Hibernate to manage connections and optimize query performance across databases.
+    - [x] Develop features to handle cross-database joins and ensure compatibility of data types and query execution.
+    - [x] `database/ConnectionManager.java` (handle multiple databases)
+    - [x] `database/DatabaseReader.java` (iterate over multiple databases)
 
 ### Version 4: GUI for Database Operations
 

@@ -16,8 +16,8 @@ public class FlatFileReader {
         this.connectionManager = connectionManager;
     }
 
-    // Reads the CSV file and returns data as a list of maps
-    public List<Map<String, Object>> getCsvFileData(String filePath) {
+    // Reads the CSV file and returns data as a TransitDataBundle object
+    public TransitDataBundle getCsvFileData(String filePath) {
         List<Map<String, Object>> data = new ArrayList<>();
         List<String> columns = getCsvFileColumns(filePath); // Get column names
 
@@ -41,7 +41,10 @@ public class FlatFileReader {
             e.printStackTrace();
         }
 
-        return data;
+        TransitDataBundle dataBundle = new TransitDataBundle();
+        dataBundle.columns = columns;
+        dataBundle.data = data;
+        return dataBundle;
     }
 
     // Reads the CSV file and returns the column names

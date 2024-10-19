@@ -1,10 +1,10 @@
 package org.example.database;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class DatabaseReader {
     private final ConnectionManager connectionManager;
@@ -13,40 +13,64 @@ public class DatabaseReader {
         this.connectionManager = connectionManager;
     }
 
-    public List<String> getTableColumns(String tableName) {
-        List<String> columns = new ArrayList<>();
-        try (ResultSet rs = connectionManager.getConnection().getMetaData().getColumns(connectionManager.getConnection().getCatalog(), null, tableName, null)) {
-            while (rs.next()) {
-                columns.add(rs.getString("COLUMN_NAME"));
+    public TransitDataBundle getTableDataBundle(String tableName) {
+        TransitDataBundle dataBundle = new TransitDataBundle();
+        try {
+            Connection connection = connectionManager.getConnection();
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName);
+
+            // Fetch column names
+            List<String> columnNames = new ArrayList<>();
+            int columnCount = resultSet.getMetaData().getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                columnNames.add(resultSet.getMetaData().getColumnName(i));
             }
-        } catch (SQLException e) {
+
+            // Fetch table data
+            List<List<Object>> tableData = new ArrayList<>();
+            while (resultSet.next()) {
+                List<Object> row = new ArrayList<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    row.add(resultSet.getObject(i));
+                }
+                tableData.add(row);
+            }
+
+            // Set the column names and table data in the data bundle
+            dataBundle.setColumnNames(columnNames);
+            dataBundle.setTableData(tableData);
+        } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Failed to retrieve table columns.");
         }
-        return columns;
+        return dataBundle;
     }
 
-    public List<Map<String, Object>> getTableData(String tableName) {
-        List<Map<String, Object>> data = new ArrayList<>();
-        try (
-                Connection connection = connectionManager.getConnection();
-                Statement stmt = connection.createStatement();
-                ResultSet rs = stmt.executeQuery("SELECT * FROM " + tableName)
-        ) {
-            ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
-
-            while (rs.next()) {
-                Map<String, Object> row = new HashMap<>();
-                for (int i = 1; i <= columnCount; i++) {
-                    row.put(metaData.getColumnName(i), rs.getObject(i));
-                }
-                data.add(row);
+    public List<String> getDatabases() {
+        List<String> databases = new ArrayList<>();
+        try {
+            Connection connection = connectionManager.getConnection();
+            ResultSet resultSet = connection.getMetaData().getCatalogs();
+            while (resultSet.next()) {
+                databases.add(resultSet.getString(1));
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Failed to retrieve table data.");
         }
-        return data;
+        return databases;
+    }
+
+    public List<String> getTables() {
+        List<String> tables = new ArrayList<>();
+        try {
+            Connection connection = connectionManager.getConnection();
+            ResultSet resultSet = connection.getMetaData().getTables(null, null, "%", new String[]{"TABLE"});
+            while (resultSet.next()) {
+                tables.add(resultSet.getString(3));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return tables;
     }
 }
