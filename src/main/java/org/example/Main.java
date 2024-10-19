@@ -93,6 +93,7 @@ public class Main {
         for (String selectedTable : selectedTables) {
             TransitDataBundle dataBundle = databaseReader.getTableDataBundle(selectedTable);
 
+            // Display table data before saving to CSV
             outputHandler.printTableData(dataBundle);
 
             System.out.println("\nEnter the CSV file name for table '" + selectedTable + "' (without extension):");
