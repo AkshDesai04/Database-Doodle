@@ -1,6 +1,6 @@
 package org.example.database.sorting;
 
-import org.example.TransitDataBundle;
+import org.example.database.TransitDataBundle;
 
 import java.util.ArrayList;
 import java.util.Comparator;

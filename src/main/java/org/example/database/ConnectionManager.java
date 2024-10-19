@@ -1,12 +1,10 @@
 package org.example.database;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ConnectionManager {
     private Connection connection;
@@ -18,6 +16,17 @@ public class ConnectionManager {
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to connect to the database.");
+        }
+    }
+
+    public void close() {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+                System.out.println("Connection closed.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -57,6 +66,20 @@ public class ConnectionManager {
             throw new RuntimeException("Failed to retrieve tables.");
         }
         return tables;
+    }
+
+    public TransitDataBundle executeQuery(String query) {
+        TransitDataBundle resultBundle = new TransitDataBundle();
+        try (Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
+
+            // Process the ResultSet directly
+            resultBundle.processResultSet(resultSet);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle exceptions as needed
+        }
+        return resultBundle;
     }
 
     public Connection getConnection() {
