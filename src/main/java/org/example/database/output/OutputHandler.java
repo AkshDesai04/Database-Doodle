@@ -1,6 +1,6 @@
 package org.example.database.output;
 
-import org.example.TransitDataBundle;
+import org.example.database.TransitDataBundle;
 import org.example.database.output.data_export.CSVExporter;
 
 import java.util.Map;

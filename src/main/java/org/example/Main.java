@@ -2,11 +2,11 @@ package org.example;
 
 import org.example.database.ConnectionManager;
 import org.example.database.DatabaseReader;
-import org.example.database.grouping.Grouping;
+import org.example.database.JoinOperations;
+import org.example.database.TransitDataBundle;
 import org.example.database.output.OutputHandler;
-import org.example.database.sorting.Sorting;
-import org.example.database.joining.Joining;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -15,48 +15,42 @@ public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Enter the number of databases you want to connect to (1 or 2):");
+        System.out.println("Enter the number of databases you want to connect to:");
         int dbCount = scanner.nextInt();
         scanner.nextLine();
 
-        ConnectionManager connectionManager1 = new ConnectionManager();
-        ConnectionManager connectionManager2 = null;
+        List<ConnectionManager> connectionManagers = new ArrayList<>();
 
-        System.out.println("Enter database 1 URL:");
-        String url1 = scanner.nextLine();
+        for (int i = 1; i <= dbCount; i++) {
+            ConnectionManager connectionManager = new ConnectionManager();
 
-        System.out.println("Enter username for database 1:");
-        String username1 = scanner.nextLine();
+            System.out.println("Enter database " + i + " URL:");
+            String url = scanner.nextLine();
 
-        System.out.println("Enter password for database 1:");
-        String password1 = scanner.nextLine();
+            System.out.println("Enter username for database " + i + ":");
+            String username = scanner.nextLine();
 
-        connectionManager1.connect(url1, username1, password1);
+            System.out.println("Enter password for database " + i + ":");
+            String password = scanner.nextLine();
 
-        if (dbCount == 2) {
-            connectionManager2 = new ConnectionManager();
-
-            System.out.println("Enter database 2 URL:");
-            String url2 = scanner.nextLine();
-
-            System.out.println("Enter username for database 2:");
-            String username2 = scanner.nextLine();
-
-            System.out.println("Enter password for database 2:");
-            String password2 = scanner.nextLine();
-
-            connectionManager2.connect(url2, username2, password2);
+            // Connect to the database
+            System.out.println("Connecting to database: " + url);
+            connectionManager.connect(url, username, password);
+            System.out.println("Connected to database: " + url);
+            connectionManagers.add(connectionManager);
         }
 
         try {
-            selectAndExportTables(connectionManager1, scanner, "1");
-            if (connectionManager2 != null) {
-                selectAndExportTables(connectionManager2, scanner, "2");
+            for (int i = 0; i < connectionManagers.size(); i++) {
+                selectAndExportTables(connectionManagers.get(i), scanner, String.valueOf(i + 1));
+            }
+
+            if (dbCount > 1) {
+                handleJoinOperations(connectionManagers, scanner);
             }
         } finally {
-            closeConnection(connectionManager1);
-            if (connectionManager2 != null) {
-                closeConnection(connectionManager2);
+            for (ConnectionManager connectionManager : connectionManagers) {
+                closeConnection(connectionManager);
             }
         }
     }
@@ -99,105 +93,115 @@ public class Main {
         for (String selectedTable : selectedTables) {
             TransitDataBundle dataBundle = databaseReader.getTableDataBundle(selectedTable);
 
-            // Display the columns in the table
-            System.out.println("Available columns in the table '" + selectedTable + "':");
-            for (int i = 0; i < dataBundle.columns.size(); i++) {
-                System.out.println((i + 1) + ". " + dataBundle.columns.get(i));
+            // Display table data before saving to CSV
+            outputHandler.printTableData(dataBundle);
+
+            System.out.println("\nEnter the CSV file name for table '" + selectedTable + "' (without extension):");
+            String fileName = scanner.nextLine();
+
+            System.out.println("Do you want to specify a custom path for the file? (yes/no):");
+            String customPathChoice = scanner.nextLine().trim().toLowerCase();
+
+            String outputPath = Paths.get(customPathChoice.equals("yes") ? scanner.nextLine() : defaultCsvPath, fileName + ".csv").toString();
+
+            outputHandler.exportTableDataToCSV(dataBundle, outputPath);
+            System.out.println("Data successfully exported to " + outputPath);
+        }
+    }
+
+    private static void handleJoinOperations(List<ConnectionManager> connectionManagers, Scanner scanner) {
+        System.out.println("You have multiple connections. Do you want to perform join operations? (yes/no):");
+        String joinChoice = scanner.nextLine().trim().toLowerCase();
+
+        if (joinChoice.equals("yes")) {
+            JoinOperations joinOperations = new JoinOperations(connectionManagers);
+
+            System.out.println("Select the type of join operation:");
+            System.out.println("1. Inner Join");
+            System.out.println("2. Outer Join");
+            System.out.println("3. Left Outer Join");
+            System.out.println("4. Right Outer Join");
+            System.out.println("5. Full Outer Join");
+            System.out.println("6. Cross Join");
+            System.out.println("7. Self Join");
+            System.out.println("8. Natural Join");
+            System.out.println("9. Equi Join");
+            System.out.println("10. Non-Equi Join");
+
+            int joinChoiceIndex = scanner.nextInt();
+            scanner.nextLine();
+            String joinType = "";
+
+            switch (joinChoiceIndex) {
+                case 1: joinType = "inner"; break;
+                case 2: joinType = "outer"; break;
+                case 3: joinType = "left"; break;
+                case 4: joinType = "right"; break;
+                case 5: joinType = "full"; break;
+                case 6: joinType = "cross"; break;
+                case 7: joinType = "self"; break;
+                case 8: joinType = "natural"; break;
+                case 9: joinType = "equi"; break;
+                case 10: joinType = "non-equi"; break;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+                    return;
             }
 
-            // Display the data and ask for operations
-            System.out.println("Select an operation to perform on the table:");
-            System.out.println("1. Sort");
-            System.out.println("2. Join");
-            System.out.println("3. Group By");
-            System.out.println("4. Export to CSV");
+            System.out.println("Select the index of the first connection:");
+            for (int i = 0; i < connectionManagers.size(); i++) {
+                System.out.println((i + 1) + ". Connection " + (i + 1));
+            }
+            int firstDbIndex = scanner.nextInt();
+            scanner.nextLine();
+            ConnectionManager firstConnection = connectionManagers.get(firstDbIndex - 1);
 
-            int operationChoice = scanner.nextInt();
-            scanner.nextLine();  // Consume newline
+            System.out.println("Select the index of the second connection:");
+            for (int i = 0; i < connectionManagers.size(); i++) {
+                System.out.println((i + 1) + ". Connection " + (i + 1));
+            }
+            int secondDbIndex = scanner.nextInt();
+            scanner.nextLine();
+            ConnectionManager secondConnection = connectionManagers.get(secondDbIndex - 1);
 
-            switch (operationChoice) {
-                case 1 -> { // Sort Operation
-                    System.out.println("Enter the number corresponding to the column to sort by:");
-                    int sortColumnIndex = scanner.nextInt();
-                    scanner.nextLine(); // Consume newline
-                    String sortColumn = dataBundle.columns.get(sortColumnIndex - 1);
-                    System.out.println("Sort ascending? (true/false):");
-                    boolean ascending = scanner.nextBoolean();
-                    scanner.nextLine();  // Consume newline
+            System.out.println("Available tables in first database connection " + firstDbIndex + ":");
+            List<String> firstTables = firstConnection.getTables();
+            for (int i = 0; i < firstTables.size(); i++) {
+                System.out.println((i + 1) + ". " + firstTables.get(i));
+            }
+            System.out.println("Select the table name from the first database:");
+            int firstTableIndex = scanner.nextInt();
+            scanner.nextLine();
+            String firstTable = firstTables.get(firstTableIndex - 1);
 
-                    dataBundle = Sorting.sort(dataBundle, sortColumn, ascending);
-                    outputHandler.printTableData(dataBundle);
-                }
-                case 2 -> { // Join Operation
-                    System.out.println("Enter the table number to join with:");
-                    for (int i = 0; i < tables.size(); i++) {
-                        System.out.println((i + 1) + ". " + tables.get(i));
-                    }
-                    int joinTableIndex = scanner.nextInt();
-                    scanner.nextLine();
-                    String joinTable = tables.get(joinTableIndex - 1);
+            System.out.println("Available tables in second database connection " + secondDbIndex + ":");
+            List<String> secondTables = secondConnection.getTables();
+            for (int i = 0; i < secondTables.size(); i++) {
+                System.out.println((i + 1) + ". " + secondTables.get(i));
+            }
+            System.out.println("Select the table name from the second database:");
+            int secondTableIndex = scanner.nextInt();
+            scanner.nextLine();
+            String secondTable = secondTables.get(secondTableIndex - 1);
 
-                    // Fetch the columns from the join table
-                    TransitDataBundle joinDataBundle = databaseReader.getTableDataBundle(joinTable);
+            TransitDataBundle joinResult = joinOperations.performJoin(joinType, firstConnection, firstTable, secondConnection, secondTable);
 
-                    // Display columns from the first table (current table)
-                    System.out.println("Columns in the current table (" + selectedTable + "):");
-                    for (int i = 0; i < dataBundle.columns.size(); i++) {
-                        System.out.println((i + 1) + ". " + dataBundle.columns.get(i));
-                    }
+            if (joinResult != null) {
+                OutputHandler outputHandler = new OutputHandler();
+                outputHandler.printTableData(joinResult);
 
-                    System.out.println("Enter the number corresponding to the column to join from the current table:");
-                    int joinColumnIndex1 = scanner.nextInt();
-                    scanner.nextLine();
-                    String joinColumn1 = dataBundle.columns.get(joinColumnIndex1 - 1);
+                System.out.println("\nEnter the CSV file name for the joined table (without extension):");
+                String fileName = scanner.nextLine();
 
-                    // Display columns from the second table (join table)
-                    System.out.println("Columns in the join table (" + joinTable + "):");
-                    for (int i = 0; i < joinDataBundle.columns.size(); i++) {
-                        System.out.println((i + 1) + ". " + joinDataBundle.columns.get(i));
-                    }
+                System.out.println("Do you want to specify a custom path for the file? (yes/no):");
+                String customPathChoice = scanner.nextLine().trim().toLowerCase();
 
-                    System.out.println("Enter the number corresponding to the column to join from the join table:");
-                    int joinColumnIndex2 = scanner.nextInt();
-                    scanner.nextLine();
-                    String joinColumn2 = joinDataBundle.columns.get(joinColumnIndex2 - 1);
+                String outputPath = Paths.get(customPathChoice.equals("yes") ? scanner.nextLine() : "C:\\DatabaseDoodleOutput\\", fileName + ".csv").toString();
 
-                    // Perform the join based on the selected columns from both tables
-                    dataBundle = Joining.performJoin(dataBundle, joinDataBundle, joinColumn1, joinColumn2);
-
-                    // Print the merged table after the join
-                    outputHandler.printTableData(dataBundle);
-                }
-                case 3 -> { // Group By Operation
-                    System.out.println("Enter the number corresponding to the column to group by:");
-                    int groupByColumnIndex = scanner.nextInt();
-                    scanner.nextLine();
-                    String groupByColumn = dataBundle.columns.get(groupByColumnIndex - 1);
-
-                    dataBundle = Grouping.groupBy(dataBundle, groupByColumn);
-                    outputHandler.printTableData(dataBundle);
-                }
-                case 4 -> { // Export to CSV
-                    System.out.println("Enter the CSV file name for table '" + selectedTable + "' (without extension):");
-                    String fileName = scanner.nextLine();
-
-                    System.out.println("Do you want to specify a custom path for the file? (yes/no):");
-                    String customPathChoice = scanner.nextLine().trim().toLowerCase();
-
-                    String outputPath;
-                    if (customPathChoice.equals("yes")) {
-                        System.out.println("Enter the custom file path:");
-                        String customPath = scanner.nextLine();
-                        outputPath = customPath + "\\" + fileName + ".csv"; // Use custom path
-                    } else {
-                        outputPath = defaultCsvPath + fileName + ".csv"; // Use default path
-                    }
-
-                    // Export table data to CSV
-                    outputHandler.exportTableDataToCSV(dataBundle, outputPath);
-                    System.out.println("Data successfully exported to " + outputPath);
-                }
-                default -> System.out.println("Invalid choice.");
+                outputHandler.exportTableDataToCSV(joinResult, outputPath);
+                System.out.println("Joined data successfully exported to " + outputPath);
+            } else {
+                System.out.println("No data found for the join operation.");
             }
         }
     }

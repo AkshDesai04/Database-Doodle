@@ -1,7 +1,5 @@
 package org.example.database;
 
-import org.example.TransitDataBundle;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;

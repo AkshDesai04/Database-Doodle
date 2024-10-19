@@ -1,6 +1,6 @@
 package org.example.database.output.data_export;
 
-import org.example.TransitDataBundle;
+import org.example.database.TransitDataBundle;
 
 import java.io.FileWriter;
 import java.io.IOException;
