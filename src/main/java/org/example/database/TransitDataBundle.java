@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TransitDataBundle {
+public class TransitDataBundle {    /*remove later*/public List<String> RowUID; //DataSourceDevice.DataSourceType.DataSourceName.UID
     public List<String> columns;
     public List<Map<String, Object>> data;
 
